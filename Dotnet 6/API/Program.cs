@@ -6,25 +6,32 @@ var app = builder.Build();
 app.MapGet("/", () => "Hello World!");
 app.MapGet("/user", () => "Sátiro!");
 app.MapGet("/addHeader", (HttpResponse response) => response.Headers.Add("Teste", "Satiro"));
+
 app.MapPost("/saveproduct", (Product product) => {
     ProductRepository.Add(product);
+    return Results.Created("/products/" + product.Code, product.Code);
 });
-app.MapGet("/getproduct", ([FromQuery] string dateStart, [FromQuery] string dateEnd) => {
+app.MapGet("/products", ([FromQuery] string dateStart, [FromQuery] string dateEnd) => {
     return dateStart + " - " + dateEnd;
 });
-app.MapGet("/getproduct/{code}", ([FromRoute] string code) => {
+app.MapGet("/products/{code}", ([FromRoute] string code) => {
     var product = ProductRepository.GetBy(code);
+    if (product is not null)
+        return Results.Ok(product);
+    return Results.NotFound();
 });
 app.MapGet("/getproductheader", (HttpRequest request) => {
     return request.Headers["product-code"].ToString();
 });
-app.MapPut("/editproduct", (Product product) => {
+app.MapPut("/products", (Product product) => {
     var productSave = ProductRepository.GetBy(product.Code);
     productSave.Name = product.Name;
+    Results.Ok();
 });
-app.MapDelete("/deleteproduct/{code}", ([FromRoute] string code) => {
+app.MapDelete("/products/{code}", ([FromRoute] string code) => {
     var productSave = ProductRepository.GetBy(code);
     ProductRepository.Remove(productSave);
+    Results.Ok();
 });
 
 app.Run();
