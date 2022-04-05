@@ -23,14 +23,18 @@ public class TokenPost
         if (!userManager.CheckPasswordAsync(user, loginRequest.Password).Result)
             Results.BadRequest();
 
+        var claims = userManager.GetClaimsAsync(user).Result;
+        var subject = new ClaimsIdentity(new Claim[]
+        {
+            new Claim(ClaimTypes.Email, loginRequest.Email),
+            new Claim(ClaimTypes.NameIdentifier, user.Id),
+        });
+        subject.AddClaims(claims);
+
         var key = Encoding.ASCII.GetBytes("A@fderwfQQSDXCCer34");
         var tokenDescriptor = new SecurityTokenDescriptor
         {
-            Subject = new ClaimsIdentity(new Claim[]
-            {
-                new Claim(ClaimTypes.Email, loginRequest.Email),
-                new Claim(ClaimTypes.NameIdentifier, user.Id),
-            }),
+            Subject = subject,
             SigningCredentials =
                 new SigningCredentials(
                     new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
